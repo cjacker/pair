@@ -826,29 +826,21 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 // printHelp shows help information
 func printHelp() {
 	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(writer, "File Upload & Download Server")
+	fmt.Fprintln(writer, "CLI to transfer files between PC and mobile via QR code scanning.")
 	fmt.Fprintln(writer, "=============================")
 	fmt.Fprintln(writer, "Usage:")
-	fmt.Fprintln(writer, "  go run server.go [OPTIONS]")
+	fmt.Fprintln(writer, "  pair [OPTIONS]")
 	fmt.Fprintln(writer, "")
 	fmt.Fprintln(writer, "Options:")
 	fmt.Fprintln(writer, "  -h\t\tShow this help message and exit")
 	fmt.Fprintln(writer, "  -f PATH\tSpecify single file to allow download (relative to current dir)")
-	fmt.Fprintln(writer, "  -x PATHS\tSpecify MULTIPLE files to allow download (comma-separated, no spaces)")
+	fmt.Fprintln(writer, "  -x PATHS\tSpecify multiple files to allow download (comma-separated, no spaces)")
 	fmt.Fprintln(writer, "\t\t  Example: -x uploads/file1.txt,uploads/file2.pdf,docs/readme.md,data/file3.zip")
-	fmt.Fprintln(writer, "")
-	fmt.Fprintln(writer, "Examples:")
-	fmt.Fprintln(writer, "  # Show help")
-	fmt.Fprintln(writer, "  go run server.go -h")
-	fmt.Fprintln(writer, "  # Allow single file download")
-	fmt.Fprintln(writer, "  go run server.go -f uploads/test.txt")
-	fmt.Fprintln(writer, "  # Allow MULTIPLE files download (any number)")
-	fmt.Fprintln(writer, "  go run server.go -x uploads/file1.txt,uploads/file2.pdf,docs/readme.md,data/report.csv,logs/app.log")
 	fmt.Fprintln(writer, "")
 	fmt.Fprintln(writer, "Access:")
 	fmt.Fprintln(writer, "  Upload Page: http://localhost:8080")
-	fmt.Fprintln(writer, "  Download List: http://localhost:8080/downloads (shows all configured files)")
-	fmt.Fprintln(writer, "  Direct Download: http://localhost:8080/download/[relative-path]")
+	fmt.Fprintln(writer, "  Download List: http://localhost:8080/downloads (shows all downloadable files)")
+	fmt.Fprintln(writer, "  Direct Download: http://localhost:8080/download/[filename]")
 	writer.Flush()
 }
 
@@ -889,7 +881,7 @@ func main() {
 		allowMultiFilePaths = uniqueList
 
 		// Show number of files configured from -x
-		fmt.Printf("✅ Configured %d files for download via -x parameter\n", len(allowMultiFilePaths))
+		fmt.Printf("- Configured %d files for download via -x parameter\n", len(allowMultiFilePaths))
 	}
 
 	// Validate parameters (only one of -f or -x can be used)
@@ -922,23 +914,23 @@ func main() {
 
 	// Server startup messages
 	fmt.Printf("Server started, current working directory: %s\n", currentWorkDir)
-	fmt.Printf("✅ Upload Page: http://%s:8080\n", localIP)
-	fmt.Printf("✅ Download List Page: http://%s:8080/downloads (shows all configured files)\n", localIP)
+	fmt.Printf("- Upload Page: http://%s:8080\n", localIP)
 
 	// Show allowed files info
 	if allowSingleFilePath != "" {
 		allowedAbsPath := filepath.Clean(filepath.Join(currentWorkDir, allowSingleFilePath))
-		fmt.Printf("✅ Allowed download file: %s (absolute: %s)\n", allowSingleFilePath, allowedAbsPath)
-		fmt.Printf("   Direct download URL: http://%s:8080/download/%s\n", localIP, allowSingleFilePath)
+		fmt.Printf("- Allowed download file: %s (absolute: %s)\n", allowSingleFilePath, allowedAbsPath)
+		fmt.Printf("  Direct download URL: http://%s:8080/download/%s\n", localIP, allowSingleFilePath)
 	} else if len(allowMultiFilePaths) > 0 {
-		fmt.Printf("✅ Allowed download files (total: %d):\n", len(allowMultiFilePaths))
+		fmt.Printf("- Download List Page: http://%s:8080/downloads (shows all configured files)\n", localIP)
+		fmt.Printf("- Allowed download files (total: %d):\n", len(allowMultiFilePaths))
 		for i, p := range allowMultiFilePaths {
 			absPath := filepath.Clean(filepath.Join(currentWorkDir, p))
-			fmt.Printf("   %d. %s (absolute: %s)\n", i+1, p, absPath)
-			fmt.Printf("      Direct download URL: http://%s:8080/download/%s\n", localIP, p)
+			fmt.Printf("  %d. %s (absolute: %s)\n", i+1, p, absPath)
+			fmt.Printf("     Direct download URL: http://%s:8080/download/%s\n", localIP, p)
 		}
 	} else {
-		fmt.Println("⚠️  No download files configured (use -f for single file or -x for multiple files)")
+		fmt.Println("- No download files configured (use -f for single file or -x for multiple files)")
 	}
 
 	// Execute QR code generation logic asynchronously in a goroutine to avoid blocking HTTP server startup
@@ -956,13 +948,13 @@ func main() {
 
 		var qrURL string
 		if allowSingleFilePath != "" {
-			fmt.Printf("\n\n\n📱️Scan below qrcode to download file: %s\n", allowSingleFilePath)
+			fmt.Printf("\n📱️Scan below qrcode to download file: %s\n", allowSingleFilePath)
 			qrURL = "http://" + localIP + ":8080/download/" + allowSingleFilePath
 		} else if len(allowMultiFilePaths) > 0 {
-			fmt.Printf("\n\n\n📱️Scan below qrcode to access downloadable files list.\n")
+			fmt.Printf("\n📱️Scan below qrcode to access downloadable files list.\n")
 			qrURL = "http://" + localIP + ":8080/downloads"
 		} else {
-			fmt.Printf("\n\n\n📱️Scan below qrcode to upload files.\n")
+			fmt.Printf("\n📱️Scan below qrcode to upload files.\n")
 			qrURL = "http://" + localIP + ":8080"
 		}
 		qrterminal.GenerateWithConfig(qrURL, config)
