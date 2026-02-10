@@ -14,6 +14,9 @@ A lightweight command-line tool for **seamless file transfer** between PC and mo
 - 📊 **Progress Tracking**: Real-time upload progress bar on the mobile web interface
 - 🎯 **Cross-Platform**: Runs on Windows, macOS, and Linux (built with Go, single binary)
 
+## Screenshot
+<img src="images/screenshot.png" alt="Screenshot" width="50%"><img src="images/phone-screenshot.png" alt="Screenshot" width="25%">
+
 ## Installation
 ### Prerequisites
 - Go 1.21+ (for building from source)
